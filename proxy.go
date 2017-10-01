@@ -14,7 +14,13 @@ type ServiceConfig struct {
 	Backend string
 	Path    string
 	Methods []string
-	UseJWT  bool
+	Auth    AuthConfig
+}
+
+//AuthConfig ...
+type AuthConfig struct {
+	UseACM       bool
+	RequiredRole []float64
 }
 
 //CreateProxy ...
@@ -25,11 +31,17 @@ func (sc *ServiceConfig) CreateProxy(r *chi.Mux) {
 
 	for _, method := range sc.Methods {
 
-		if strings.HasSuffix(sc.Path, "/*") {
-			r.Method(method, matcher.Extract(sc.Path), proxy)
-		}
+		r.Group(func(r chi.Router) {
 
-		r.Method(method, sc.Path, proxy)
+			r.Use(BuildJWTHandler(sc))
+
+			if strings.HasSuffix(sc.Path, "/*") {
+				r.Method(method, matcher.Extract(sc.Path), proxy)
+			}
+
+			r.Method(method, sc.Path, proxy)
+		})
+
 	}
 }
 
@@ -59,7 +71,7 @@ func NewReverseProxy(conf *ServiceConfig) http.HandlerFunc {
 				req.Header.Set("User-Agent", "")
 			}
 
-			req.Header.Set("X-Proxied-By", "Stuwilli")
+			//req.Header.Set("X-Proxied-By", "Stuwilli")
 		}
 
 		p := &httputil.ReverseProxy{Director: d}

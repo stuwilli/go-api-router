@@ -6,18 +6,26 @@ import (
 	"net/http/httputil"
 
 	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/middleware"
 )
 
 func main() {
 
 	r := chi.NewRouter()
-	// r.Use(middleware.RedirectSlashes)
-	// r.Use(middleware.StripSlashes)
+	r.Use(middleware.RequestID)
+	r.Use(middleware.RealIP)
+	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
+	r.Use(middleware.StripSlashes)
 
 	config := ServiceConfig{
 		Backend: "http://localhost:8080/backend",
 		Path:    "/test/*",
 		Methods: []string{"GET"},
+		Auth: AuthConfig{
+			UseACM:       true,
+			RequiredRole: []float64{0, 1},
+		},
 	}
 
 	config.CreateProxy(r)
