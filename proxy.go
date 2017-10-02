@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -11,16 +12,17 @@ import (
 
 //ServiceConfig ...
 type ServiceConfig struct {
-	Backend string
-	Path    string
-	Methods []string
-	Auth    AuthConfig
+	Name    string     `json:"name"`
+	Backend string     `json:"backend"`
+	Path    string     `json:"path"`
+	Methods []string   `json:"methods"`
+	Auth    AuthConfig `json:"auth"`
 }
 
 //AuthConfig ...
 type AuthConfig struct {
-	UseACM       bool
-	RequiredRole []float64
+	UseACM       bool      `json:"useACM"`
+	RequiredRole []float64 `json:"requiredRole"`
 }
 
 //CreateProxy ...
@@ -30,6 +32,8 @@ func (sc *ServiceConfig) CreateProxy(r *chi.Mux) {
 	proxy := NewReverseProxy(sc)
 
 	for _, method := range sc.Methods {
+
+		fmt.Println("Creating proxy map:", method, sc.Path, ">", sc.Backend)
 
 		r.Group(func(r chi.Router) {
 

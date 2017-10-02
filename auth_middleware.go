@@ -1,9 +1,9 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"net/http"
+	"os"
 	"strings"
 
 	jwt "github.com/dgrijalva/jwt-go"
@@ -11,41 +11,17 @@ import (
 )
 
 //JWTSecretKey ...
-const JWTSecretKey = "SECRETKEY"
+var JWTSecretKey string
 
-type claimsKey string
+func init() {
 
-//ClaimsKey ...
-const ClaimsKey claimsKey = "claims"
+	key, ok := os.LookupEnv("JWT_KEY")
 
-//JWTAuth ...
-func JWTAuth(next http.Handler) http.Handler {
-
-	fn := func(w http.ResponseWriter, r *http.Request) {
-
-		tokenString, err := TokenFromHeader(r)
-
-		if err != nil {
-			rb := wr.NewBuilder().Status(http.StatusUnauthorized).
-				Error(err).Build()
-			rb.WriteJSON(w)
-			return
-		}
-
-		token, err := ValidateToken(tokenString)
-
-		if err != nil {
-			rb := wr.NewBuilder().Status(http.StatusUnauthorized).
-				Error(err).Build()
-			rb.WriteJSON(w)
-			return
-		}
-		ctx := r.Context()
-		ctx = context.WithValue(ctx, ClaimsKey, token.Claims)
-		next.ServeHTTP(w, r.WithContext(ctx))
+	if !ok {
+		key = "SECRETKEY"
 	}
 
-	return http.HandlerFunc(fn)
+	JWTSecretKey = key
 }
 
 //BuildJWTHandler ...
